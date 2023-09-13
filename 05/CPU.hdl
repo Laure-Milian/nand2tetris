@@ -1,0 +1,141 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in 
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM==0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time step. If reset==1 then the 
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+
+    // A instruction (starts with 0) : ARegister is fed from the instruction
+    // C instruction (starts with 1) : ARegister is fed from the ALU
+    Mux16(a=instruction, b=aluOut, sel=instruction[15], out=instructionForARegister);
+
+    // Load selection for ARegister
+    Mux(a=false, b=true, sel=instruction[5], out=loadForARegisterTest); // For C instruction
+    Mux(a=true, b=loadForARegisterTest, sel=instruction[15], out=loadForARegister); // For A instruction (always true)
+
+    // ARegister
+    ARegister(in=instructionForARegister, load=loadForARegister, out=aregisterOut, out[0..14]=addressM);
+
+    // Si a = 0 => source = A
+    // Si a = 1 => source = inM
+    Mux16(a=aregisterOut, b=inM, sel=instruction[12], out=apartForALU);
+
+    // Load selection for DRegister
+    Mux(a=false, b=true, sel=instruction[4], out=loadForDRegisterTest); // For C instruction
+    Mux(a=false, b=loadForDRegisterTest, sel=instruction[15], out=loadForDRegister); // For A instruction (always false)
+
+    // DRegister
+    DRegister(in=aluOut, load=loadForDRegister, out=dpartForALU);
+
+    // ALU
+    ALU(x=dpartForALU, y=apartForALU, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=aluOut, zr=zr, ng=ng);
+
+    // WriteM
+    // A instruction : writeM == false
+    // C instruction : writeM => check destination bit
+    And(a=instruction[15], b=instruction[3], out=shouldWriteM);
+    Mux(a=false, b=true, sel=shouldWriteM, out=writeM);
+
+    // *** PC logic START ***
+
+    // Settings
+    Not(in=instruction[2], out=notj2);
+    Not(in=instruction[1], out=notj1);
+    Not(in=instruction[0], out=notj0);
+    Not(in=zr, out=notzr);
+    Not(in=ng, out=notng);
+    And(a=zr, b=ng, out=zrAndng);
+    And(a=notzr, b=notng, out=notzrAndNotng);
+    Or(a=zr, b=notng, out=zrOrNotng);
+    And(a=notzr, b=ng, out=notzrAndng);
+    Or(a=zr, b=ng, out=zrOrng);
+
+    // 000 = No jump (inc true) - default
+
+    // 001 JGT : if out > 0 jump
+    And(a=notj2, b=notj1, out=notj2AndNotj1);
+    And(a=notj2AndNotj1, b=instruction[0], out=isJGT);
+    And(a=isJGT, b=notzrAndNotng, out=caseJGT); // On est cas JGT + la condition est remplie
+
+    // 010 JEQ : if out = 0 jump
+    And(a=notj2, b=instruction[1], out=notj2Andj1);
+    And(a=notj2Andj1, b=notj0, out=isJEQ);
+    And(a=isJEQ, b=zr, out=caseJEQ); // On est cas JEQ + la condition est remplie
+
+    // 011 JGE : if out >= 0 jump
+    And(a=notj2Andj1, b=instruction[0], out=isJGE);
+    And(a=isJGE, b=zrOrNotng, out=caseJGE); // On est cas JGE + la condition est remplie
+
+    // 100 JLT : if out < 0 jump
+    And(a=instruction[2], b=notj1, out=j2AndNotj1);
+    And(a=j2AndNotj1, b=notj0, out=isJLT);
+    And(a=isJLT, b=notzrAndng, out=caseJLT); // On est cas JLT + la condition est remplie
+
+    // 101 JNE : if out != 0 jump
+    And(a=j2AndNotj1, b=instruction[0], out=isJNE);
+    And(a=isJNE, b=notzr, out=caseJNE); // On est cas JNE + la condition est remplie
+
+    // 110 JLE : if out <= 0 jump
+    And(a=instruction[2], b=instruction[1], out=j2Andj1);
+    And(a=j2Andj1, b=notj0, out=isJLE);
+    And(a=isJLE, b=zrOrng, out=caseJLE); // On est cas JLE + la condition est remplie
+
+    // 111 JMP : Unconditionnal jump
+    And(a=j2Andj1, b=instruction[0], out=caseJMP);
+
+    // On cherche à définir la valeur de INC
+    Mux(a=true, b=true, sel=true, out=incCheck1); // Par défaut, inc = 1
+    Mux(a=incCheck1, b=false, sel=caseJGT, out=incCheck2);
+    Mux(a=incCheck2, b=false, sel=caseJEQ, out=incCheck3);
+    Mux(a=incCheck3, b=false, sel=caseJGE, out=incCheck4);
+    Mux(a=incCheck4, b=false, sel=caseJLT, out=incCheck5);
+    Mux(a=incCheck5, b=false, sel=caseJNE, out=incCheck6);
+    Mux(a=incCheck6, b=false, sel=caseJLE, out=incCheck7);
+    Mux(a=incCheck7, b=false, sel=caseJMP, out=incCheck8);
+
+    // Jump only possible if c instruction
+    Mux(a=true, b=incCheck8, sel=instruction[15], out=inc);
+
+    // Load
+    Not(in=inc, out=load);
+
+    // *** PC logic END ***
+
+    // PC
+    PC(in=aregisterOut, load=load, inc=inc, reset=reset, out[0..14]=pc);
+}

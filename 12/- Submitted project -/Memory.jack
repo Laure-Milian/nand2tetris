@@ -1,0 +1,63 @@
+/**
+ * Memory operations library.
+ */
+class Memory {
+
+    static Array ram; // used for peek and poke
+    static Array freeList; // used for alloc and deAlloc
+    static int heapBaseAddress;
+
+    /** Initializes memory parameters. */
+    function void init() {
+        let ram = 0;
+        let heapBaseAddress = 2048;
+        let freeList = heapBaseAddress; // heapBaseAddress
+        let freeList[0] = null; // next
+        let freeList[1] = 14334; // length
+        return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return ram[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
+    }
+
+    /** finds and allocates from the heap a memory block of the
+     *  specified size and returns a reference to its base address. */
+    function int alloc(int size) {
+
+        var Array currentSegment, segment;
+        var int fullSize, currentSegmentBaseAddress, currentSegmentSize, nextSegmentBaseAddress;
+
+        let fullSize = size + 2;
+
+        let nextSegmentBaseAddress = freeList[0];
+        let currentSegmentSize = freeList[1];
+
+        while (currentSegmentSize < fullSize) {
+            let currentSegmentBaseAddress = nextSegmentBaseAddress;
+            let currentSegmentSize = freeList[currentSegmentBaseAddress+1];
+        }
+        
+        let freeList[currentSegmentBaseAddress+1] = currentSegmentSize - fullSize;
+        let segment = freeList + 2 + freeList[currentSegmentBaseAddress+1];
+        let segment[0] = null;
+        let segment[1] = size;
+
+        // block
+        return segment + 2;
+    }
+
+    /** De-allocates the given object and frees its space. */
+    function void deAlloc(Array o) {
+        // TODO
+        return;
+    }
+
+}

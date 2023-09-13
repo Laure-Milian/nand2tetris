@@ -1,0 +1,184 @@
+class Pencil {
+
+   field int x, y;
+   field int maxX, maxY;
+   field int bitmapSize;
+   field int memAddress;
+   field int width;
+   field int widthStep;
+   field int moveStep;
+   field boolean isPencilMode;
+
+   constructor Pencil new() {
+      let x = 150;
+      let y = 50;
+      let maxX = 512;
+      let maxY = 255 - 30; // 2 lines of text of 11 px + some space
+      let bitmapSize = 16;
+      let width = 4;
+      let widthStep = 2;
+      let moveStep = 4;
+      let isPencilMode = true;
+      do drawCursor();
+      return this;
+   }
+
+   method void dispose() {
+      do Memory.deAlloc(this);
+      return;
+   }
+
+   method void switchMode() {
+      if (isPencilMode) {
+         let isPencilMode = false;
+      } else {
+         let isPencilMode = true;
+      }
+      return;
+   }
+
+   method void moveUp() {
+
+      var int startY;
+      let startY = y;
+      do Screen.setColor(isPencilMode);
+
+      let y = y - moveStep;
+      if (y < 0) {
+         let y = 0;
+      }
+      do Screen.drawRectangle(x, y, x+width, startY+width);
+
+      do drawCursor();
+
+      return;
+   }  
+
+   method void moveDown() {
+      
+      var int startY;
+      let startY = y;
+      do Screen.setColor(isPencilMode);
+
+      if ( y < (maxY-moveStep-width) ) {
+         let y = y + moveStep;
+         do Screen.drawRectangle(x, startY, x+width, y);
+      }
+
+      do drawCursor();
+
+      return;
+   }
+
+
+   method void moveLeft() {
+      
+      var int startX;
+      let startX = x;
+      do Screen.setColor(isPencilMode);
+
+      let x = x - moveStep;
+      if (x < 0) {
+         let x = 0;
+      }
+      do Screen.drawRectangle(x, y, startX+width, y+width);
+      
+      do drawCursor();
+
+      return;
+   }
+
+   method void moveRight() {
+      var int startX;
+      let startX = x;
+      do Screen.setColor(isPencilMode);
+
+      if (x < (maxX-moveStep-width)) {
+         let x = x + moveStep;
+         do Screen.drawRectangle(startX, y, x, y+width);
+      }
+
+      do drawCursor();
+
+      return;
+   }
+
+   method void addWidth() {
+      if (width < 20) {
+         let width = width + widthStep;
+         do adjustXAndY();
+         do drawCursor();
+      }
+      return;
+   }
+
+   method void removeWidth() {
+      if ( (width - widthStep) > 0) {
+         let width = width - widthStep;
+         do adjustXAndY();
+         do drawCursor();
+      }
+      return;
+   }
+
+   method void adjustXAndY() {
+      if (x < 0) {
+         let x = 0;
+      }
+      if (y < 0) {
+         let y = 0;
+      }
+      if (x > (maxX - width)) {
+         let x = maxX - width - moveStep - 10;
+      }
+      if (y > (maxY - width)) {
+         let y = maxY - width - moveStep - 10;
+      }
+      return;
+   }
+
+   method void drawCursor() {
+      var int startX, startY, endX, endY;
+      let startX = x;
+      let startY = y;
+      let endX = x + width;
+      let endY = y + width;
+      do Screen.setColor(false);
+      do Screen.drawRectangle(startX, startY, endX, endY);
+      do Screen.setColor(true);
+      do Screen.drawLine(startX, startY, endX, startY);
+      do Screen.drawLine(endX, startY, endX, endY);
+      do Screen.drawLine(endX, endY, startX, endY);
+      do Screen.drawLine(startX, endY, startX, startY);
+      return;
+   }
+
+   method void drawSmiley() {
+
+      var int location, memAddress, startX, startY;
+
+      let startX = x + width;
+      let startY = y + width;
+      let location = (startY * 32) + (startX / 16);
+
+      let memAddress = 16384+location;
+      do Memory.poke(memAddress+0, 4080);
+      do Memory.poke(memAddress+32, 4104);
+      do Memory.poke(memAddress+64, 8196);
+      do Memory.poke(memAddress+96, 16386);
+      do Memory.poke(memAddress+128, -29647);
+      do Memory.poke(memAddress+160, -29647);
+      do Memory.poke(memAddress+192, -29647);
+      do Memory.poke(memAddress+224, -32767);
+      do Memory.poke(memAddress+256, -32767);
+      do Memory.poke(memAddress+288, -30703);
+      do Memory.poke(memAddress+320, -31711);
+      do Memory.poke(memAddress+352, -31807);
+      do Memory.poke(memAddress+384, 16386);
+      do Memory.poke(memAddress+416, 8196);
+      do Memory.poke(memAddress+448, 4104);
+      do Memory.poke(memAddress+480, 4080);
+
+      return;
+   }
+}

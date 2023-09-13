@@ -1,0 +1,96 @@
+class Canvas {
+   
+   field Pencil pencil;
+
+   constructor Canvas new() {
+      let pencil = Pencil.new();
+      do printInstructions();
+      return this;
+   }
+
+   method void dispose() {
+      do pencil.dispose();
+      do Memory.deAlloc(this);
+      return;
+   }
+
+   method void printInstructions() {
+      do Output.moveCursor(21, 0);
+      do Output.printString("Hello ! -- Arrows to move -- Space = switch pencil / eraser --");
+      do Output.moveCursor(22, 0);
+      do Output.printString("Page up/down = change width -- Enter = smiley :)");
+      return;
+   }
+
+   method void run() {
+
+      var int key;
+      
+      while (true) {
+
+         // waits for a key to be pressed
+         while (key = 0) {
+            //do pencil.blink();
+            let key = Keyboard.keyPressed();
+         }
+
+         do manageKeyPress(key);
+
+         // waits for the key to be released
+         while (~(key = 0)) {
+            let key = Keyboard.keyPressed();
+            do move(key);
+         }
+
+     }
+     return;
+   }
+
+   method void move(int key) {
+      
+      if (key = 131) { // arrow up = up
+         do pencil.moveUp(); 
+      }
+
+      if (key = 133) { // arrow down = down
+         do pencil.moveDown(); 
+      }
+
+      if (key = 130) { // arrow left = left
+         do pencil.moveLeft(); 
+      }
+
+      if (key = 132) { // arrow right = right
+         do pencil.moveRight(); 
+      }
+
+      do Sys.wait(15);  // delays the next movement
+      return;
+   }
+
+
+   method void manageKeyPress(int key) {
+
+      if (key = 32) { // Space = switch from pencil to eraser and vice-versa
+         do pencil.switchMode();
+      }
+
+      if (key = 136) { // Page up = + line width
+         do pencil.addWidth();
+      }
+
+      if (key = 137) { // Page down = - line width
+         do pencil.removeWidth();
+      }
+
+      if (key = 128) { // New line = draw smiley
+         do pencil.drawSmiley();
+      }
+
+      return;
+   }
+
+}
+
+
+
