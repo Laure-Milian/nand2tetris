@@ -4,13 +4,11 @@ This repository contains all the completed projects from the excellent course "F
 
 ## Overview
 
-My motivation to take this course was to **gain a deeper understanding of all the chips included in a modern computer**.
+This course objective is to **build a fully functional computer** (to play Tetris on!).
 
-It guided me, step by step, on the journey to **build a fully functional computer** (to play Tetris on!).
+My motivation to take it was to **gain a deeper understanding of all the layers that constitute a modern computer**.
 
-Before taking this course I developed programs running on a magic and mysterious box. Now it's still magic but not that mysterious anymore :smiley:
-
-It was also a good opportunity to start coding in Python :snake:
+Before taking this course I developed programs running on a magic and mysterious box. Now it's still magic but not that mysterious anymore :slightly_smiling_face:
 
 ## Links
 
