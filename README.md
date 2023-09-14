@@ -25,3 +25,7 @@ It was also a good opportunity to try coding in Python :snake:
 > "In this project-centered course you will build a modern software hierarchy, designed to enable the translation and execution of object-based, high-level languages on a bare-bone computer hardware platform. In particular, you will **implement a virtual machine and a compiler** for a simple, Java-like programming language, and you will **develop a basic operating system** that closes gaps between the high-level language and the underlying hardware platform. In the process, you will gain a deep, hands-on understanding of numerous topics in applied computer science, e.g. stack processing, parsing, code generation, and classical algorithms and data structures for memory management, vector graphics, input-output handling, and various other topics that lie at the very core of every modern computer system."
 
 ![From Nand to Tetris : the big picture](the-big-picture.PNG)
+
+- [Coursera Certificate part 1](https://www.coursera.org/account/accomplishments/certificate/42CJM5UHQ6QU)
+
+- [Coursera Certificate part 2](https://www.coursera.org/account/accomplishments/certificate/JSXPQZ788KSD)
